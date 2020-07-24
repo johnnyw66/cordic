@@ -1,2 +1,4 @@
 # cordic
-COordinate Rotation DIgital Computer)
+COordinate Rotation DIgital Computer
+
+Verilog implementation
