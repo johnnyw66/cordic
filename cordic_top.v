@@ -39,8 +39,8 @@ blinker #(27) blink5(.clk(CLK), .led(LED5)) ;
 blinker #(23) blinkRED(.clk(CLK), .led(red) ) ;
 blinker #(24) blinkGREEN(.clk(CLK), .led(green)) ;
 
-assign LEDR_N =  ~(red & BTN1) ;
-assign LEDG_N =  ~(green & BTN2) ;
+assign LEDR_N =  BTN_N ? ~red : 1 ;
+assign LEDG_N =  BTN_N ? ~green : 1;
 
 
 endmodule
