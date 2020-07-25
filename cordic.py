@@ -121,7 +121,7 @@ def generateAtanTable():
                                     # us to shift instead of multiplying
         fangle  =fp(angle)
         atanTbl[i] = fangle
-        print("atan[%02d]  = %s" % (i,format(fangle, '031b')))
+        print("assign atan[%02d]  = 32'b%s ;" % (i,format(fangle, '031b')))
 
     return atanTbl
 
