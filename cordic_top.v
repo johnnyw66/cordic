@@ -1,7 +1,6 @@
 /*
  *
  */
-
 `default_nettype none
 
 module top (
@@ -11,11 +10,19 @@ module top (
 	output LEDR_N,
 	output LEDG_N,
 
-	output P1A1,  // AUDIO
-	output P1A4,  // AudioL
-	output P1A7,  // LATCH
-	input  P1A8,  // GPD1
-	input  P1A9,  // GPD3
+	output P1A1,
+  output P1A2,
+  output P1A3,
+  output P1A4,
+
+	output P1A7,
+	output P1A8,
+	output P1A9,
+  output P1A10,
+  output P1B1,
+  output P1B2,
+  output P1B3,
+  output P1B4,
 
   input BTN_N,
   input BTN1,
@@ -29,39 +36,11 @@ module top (
 	output LED5
 );
 
-wire red,green ;
-wire [31:0] atan[0:30] ;
-assign atan[00]  = 32'b0110010010000111111011010101000 ;
-assign atan[01]  = 32'b0011101101011000110011100000101 ;
-assign atan[02]  = 32'b0001111101011011011101011111100 ;
-assign atan[03]  = 32'b0000111111101010110111010100110 ;
-assign atan[04]  = 32'b0000011111111101010101101110110 ;
-assign atan[05]  = 32'b0000001111111111101010101011011 ;
-assign atan[06]  = 32'b0000000111111111111101010101010 ;
-assign atan[07]  = 32'b0000000011111111111111101010101 ;
-assign atan[08]  = 32'b0000000001111111111111111101010 ;
-assign atan[09]  = 32'b0000000000111111111111111111101 ;
-assign atan[10]  = 32'b0000000000011111111111111111111 ;
-assign atan[11]  = 32'b0000000000001111111111111111111 ;
-assign atan[12]  = 32'b0000000000000111111111111111111 ;
-assign atan[13]  = 32'b0000000000000011111111111111111 ;
-assign atan[14]  = 32'b0000000000000001111111111111111 ;
-assign atan[15]  = 32'b0000000000000000111111111111111 ;
-assign atan[16]  = 32'b0000000000000000011111111111111 ;
-assign atan[17]  = 32'b0000000000000000001111111111111 ;
-assign atan[18]  = 32'b0000000000000000000111111111111 ;
-assign atan[19]  = 32'b0000000000000000000011111111111 ;
-assign atan[20]  = 32'b0000000000000000000001111111111 ;
-assign atan[21]  = 32'b0000000000000000000000111111111 ;
-assign atan[22]  = 32'b0000000000000000000000011111111 ;
-assign atan[23]  = 32'b0000000000000000000000001111111 ;
-assign atan[24]  = 32'b0000000000000000000000000111111 ;
-assign atan[25]  = 32'b0000000000000000000000000011111 ;
-assign atan[26]  = 32'b0000000000000000000000000001111 ;
-assign atan[27]  = 32'b0000000000000000000000000001000 ;
-assign atan[28]  = 32'b0000000000000000000000000000100 ;
-assign atan[29]  = 32'b0000000000000000000000000000010 ;
-assign atan[30]  = 32'b0000000000000000000000000000001 ;
+//localparam FPSHIFT = 30 ;
+
+`define _FP(_val, _shift) (_val * (1 <<< _shift))
+
+wire red, green ;
 
 blinker #(24) blink1(.clk(CLK), .led(LED1)) ;
 blinker #(22) blink2(.clk(CLK), .led(LED2)) ;
@@ -74,14 +53,34 @@ blinker #(24) blinkGREEN(.clk(CLK), .led(green)) ;
 assign LEDR_N =  BTN_N ? ~red : 1 ;
 assign LEDG_N =  BTN_N ? ~green : 1;
 
+reg [20:0] counter ;
+reg [15:0] hcounter ;
 
-generate
-  genvar i ;
-
-  for (i = 0 ; i < 31; i = i + 1)
-    begin : gen1
-      
+always @(posedge CLK)
+begin
+  counter <= counter + 1 ;
+  if (counter == 0)
+  begin
+    hcounter <= hcounter + 1 ;
   end
-endgenerate
+end
+
+
+wire [3:0] digitsel ;
+wire [6:0] _7seg ;
+wire signed [31:0] angle ;
+wire signed [31:0] cosine ;
+wire signed [31:0] sine ;
+
+assign angle = `_FP(272,8) ;
+
+cordic #(8) c1(.clk(CLK),.angle(angle),.cosine(cosine),.sine(sine)) ;
+
+hexdisplay segdisplay(.clk(CLK), .value(sine), .enable(1), .segment(_7seg),.omask(digitsel)) ;
+
+//assign lvalue = 16'habcd ;
+
+assign {P1B1, P1B2, P1B3, P1B4} = {digitsel[0], digitsel[1], digitsel[2], digitsel[3]} ;
+assign {P1A1, P1A2, P1A3, P1A4, P1A7, P1A8, P1A9} =  _7seg[6:0] ;
 
 endmodule

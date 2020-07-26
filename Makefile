@@ -1,5 +1,6 @@
 PROJ = cordic_top
-ADD_SRC = cordic.v blinker.v
+ADD_SRC = cordic.v blinker.v hexdisplay.v hexseg.v
+
 
 PIN_DEF = icebreaker.pcf
 DEVICE = up5k
