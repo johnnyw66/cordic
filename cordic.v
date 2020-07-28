@@ -1,12 +1,15 @@
 
 module  cordic  (
 	input clk,
-	input signed [31:0] angle,
-	output signed [31:0] sine,
-	output signed [31:0] cosine
+	input signed [WIDTH-1:0] angle,
+	output signed [WIDTH-1:0] cosine,
+	output signed [WIDTH-1:0] sine,
+	output signed [WIDTH-1:0] finalAngle,
+	output [1:0] currentQuad
 );
 
 parameter WIDTH = 32 ;
+parameter FPSHIFT = 10 ;
 
 wire [31:0] atan[0:30] ;
 assign atan[00]  = 32'b0110010010000111111011010101000 ;
@@ -45,31 +48,63 @@ assign atan[30]  = 32'b0000000000000000000000000000001 ;
 
 
 // Initialise Rotation
-localparam finalGainFP = `_FP(0.6072529350088814,WIDTH) ;
-localparam zeroFP = `_FP(0,WIDTH) ;
+localparam finalGainFP = `_FP(0.6072529350088814,FPSHIFT) ;
+localparam zeroFP = `_FP(0,FPSHIFT) ;
 
 
 initial begin
 	$display("begin") ;
 end
 
+
+
 wire [1:0] quad ;
-wire  signed [15:0] vx,vy ;
+wire  signed [15:0] vx,vy,startingAngle ;
 
-assign quad = (angle > `_FP(270,WIDTH) ? 2'd3 : (angle > `_FP(180,WIDTH) ? 2'd2 : (angle > `_FP(90,WIDTH) ? 2'd1 : 2'd0))) ;
-assign vx = (quad == 2'd2 || quad == 2'd0)  ? zeroFP : (quad == 2'd3 ? -finalGainFP : finalGainFP) ;
-assign vy = (quad == 2'd3 || quad == 2'd1)  ? zeroFP : (quad == 2'd2 ? -finalGainFP : finalGainFP) ;
+wire [31:0] startingAngles [3:0] ;
+wire [31:0] startingVx [3:0] ;
+wire [31:0] startingVy [3:0] ;
 
-generate
-  genvar i ;
+assign quad = (angle > `_FP(`_DEG2RADIANS(270),FPSHIFT) ? 2'd3 : (angle > `_FP(`_DEG2RADIANS(180),FPSHIFT) ? 2'd2 : (angle > `_FP(`_DEG2RADIANS(90),FPSHIFT) ? 2'd1 : 2'd0))) ;
 
-  for (i = 0 ; i < 31; i = i + 1)
-    begin : gen1
+// starting Angle depends on quad of required angle
 
-  end
-endgenerate
+assign startingAngles[0] = `_FP(`_DEG2RADIANS(0), FPSHIFT) ;
+assign startingAngles[1] = `_FP(`_DEG2RADIANS(90), FPSHIFT) ;
+assign startingAngles[2] = `_FP(`_DEG2RADIANS(180), FPSHIFT) ;
+assign startingAngles[3] = `_FP(`_DEG2RADIANS(270), FPSHIFT) ;
 
-assign sine = vx ;
-assign cosine = vy ;
+//assign vx = (quad == 2'd2 || quad == 2'd0)  ? zeroFP : (quad == 2'd3 ? -finalGainFP : finalGainFP) ;
+//assign vy = (quad == 2'd3 || quad == 2'd1)  ? zeroFP : (quad == 2'd2 ? -finalGainFP : finalGainFP) ;
+
+assign startingVx[0] = zeroFP ;
+assign startingVx[1] = finalGainFP ;
+assign startingVx[2] = zeroFP;
+assign startingVx[3] = -finalGainFP ;
+
+assign startingVy[0] = finalGainFP ;
+assign startingVy[1] = zeroFP ;
+assign startingVy[2] = -finalGainFP;
+assign startingVy[3] = zeroFP ;
+
+assign startVx = startingVx[quad] ;
+assign startVy = startingVy[quad] ;
+
+
+
+//cordic_update(.vx(startVx), .vy(startVy),.atan(atan[0]),.currentAngle(startingAngle), .nTheta(nAngle),.nx(nx), .ny(ny)) ;
+//cordic_update(.vx(nx), .vy(ny),.atan(atan[1]),.currentAngle(nAngle), .nTheta(nAngle),.nx(nx), .ny(ny)) ;
+
+
+
+//assign sine = sVx[quad] ;
+//assign cosine = sVy[quad] ;
+//assign finalAngle = 0 ;
+
+assign currentQuad = quad ;
+assign sine = startingVx[quad] ;
+assign cosine = startingVy[quad] ;
+assign startingAngle = startingAngles[quad] ;
+assign finalAngle = startingAngle ;
 
 endmodule
