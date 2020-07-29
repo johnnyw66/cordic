@@ -70,10 +70,6 @@ def lookupAngleFromAtan(index):
     return atan[index]
 
 def iterateSinCos(wantedAngle):
-    return iterateSinCosQuad1(wantedAngle)
-
-def iterateSinCosQuad1(wantedAngle):
-
     # Start off with an appropriate vector depending on the quadrant
     # our required angle is.
 
@@ -126,34 +122,29 @@ def generateAtanTable():
 
     return atanTbl
 
+def generateAngleTable():
+    print("wire signed [31:0] angles[255:0] ;")
+    for j in range(0,256):
+        angle = j * 2.0 * math.pi / 256 ;     # work out the angle which will allow
+        fangle = fp(angle) ;
+        print("assign angles[%02d]  = 32'b%s ;" % (j,format(fangle, '031b')))
+    return
+
+
+generateAngleTable() ;
+
 atan = generateAtanTable()
-bad = 0
+
 tol = 0.0000001
+exampleAngleInDegrees = 30 ;
 
 print "Starting Test..."
-parts = 100
-testsCompleted = 0
-minSin = 1
-maxSin = -1
-for degTest in range(0 * parts,360 * parts):
-    testsCompleted+=1 ;
-    exampleAngleInDegrees = 1.0 * degTest / parts
+
     #print(exampleAngleInDegrees)
-    wantedAngle = fp(calcRadians(exampleAngleInDegrees))
-    sinA,cosA,finalAngle = iterateSinCos(wantedAngle)
+wantedAngle = fp(calcRadians(exampleAngleInDegrees))
+sinA,cosA,finalAngle = iterateSinCos(wantedAngle)
 
-    if (sinA > maxSin):
-        maxSin = sinA
-    if (sinA < minSin):
-        minSin = sinA
+errSin = abs(ufp(sinA) - math.sin(ufp(wantedAngle)))
+errCos = abs(ufp(cosA) - math.cos(ufp(wantedAngle)))
 
-    errSin = abs(ufp(sinA) - math.sin(ufp(wantedAngle)))
-    errCos = abs(ufp(cosA) - math.cos(ufp(wantedAngle)))
-
-    if (errSin >  tol or errCos > tol):
-        bad += 1
-        print "Bad Approx Angle %f ErrSin %f ErrCos %f finalAngle %f" % (exampleAngleInDegrees,errSin,errCos,calcDegrees(ufp(finalAngle)))
-
-print "Bad approximations %d  out of %d" % (bad, testsCompleted)
-print "Min Sin %d Max Sin %d" % (minSin, maxSin)
-print "%s" % (format(maxSin, '032b'))
+print "Wanted Angle %f Sine %f (ErrSin %f) Cosine %f (ErrCos %f) finalAngle %f" % (exampleAngleInDegrees,ufp(sinA),errSin,ufp(cosA),errCos,calcDegrees(ufp(finalAngle)))

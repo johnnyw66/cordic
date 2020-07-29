@@ -16,12 +16,14 @@ module top (
 	output P1A7,
 	output P1A8,
 	output P1A9,
-//  output P1A10,
+  output P1A10,
 
   output P1B1,
   output P1B2,
   output P1B3,
   output P1B4,
+
+  output P1B7,
 
   input BTN_N,
   input BTN1,
@@ -78,21 +80,43 @@ reg signed [WIDTH - 1:0] cosine ;
 reg signed [WIDTH - 1:0] sine ;
 reg signed [WIDTH - 1:0] finalAngle ;
 reg [1:0] currentQuad ;
-reg [14:0] radcounter ;
+reg [24:0] radcounter ;
+reg [31:0] musiccounter ;
 
 assign angle1degrad =  `_FP(`_DEG2RADIANS(1),FPSHIFT) ;
-//assign anglerad = `_FP(`_DEG2RADIANS(45),FPSHIFT) ;
+assign anglerad = `_FP(`_DEG2RADIANS(30),FPSHIFT) ;
 
+`define _NOTE(_freq) (12000000/(2*_freq))
+
+  //FCLK = 12000000 ; // 12 MHZ
+  //1 SEC = 12 000 000 TICKS
+  //1/f secs = FCLK/f  ticks
+  // toggle state every FCLK/2*f
+  // So for, A4 = 440Hz
+  // count up to 12000000 / 880 = 13636
+
+  reg note ;
+
+  always @(posedge CLK)
+  begin
+      musiccounter <= musiccounter + 1 ;
+      if (musiccounter == `_NOTE(988))
+      begin
+        note <= ~note ;
+        musiccounter <= 0 ;
+      end
+  end
+  assign P1B7 = note ;
 
   always @(posedge CLK)
   begin
     radcounter <= radcounter + 1 ;
     if (radcounter == 0)
     begin
-      anglerad <= anglerad + angle1degrad ;
+      //anglerad <= anglerad + angle1degrad ;
       if (anglerad > `_FP(`_DEG2RADIANS(360),FPSHIFT))
         begin
-        anglerad <= 0 ;
+        //anglerad <= 0 ;
       end
     end
   end
@@ -102,7 +126,14 @@ cordic #(.WIDTH(32),.FPSHIFT(28)) c1(.clk(CLK),.angle(anglerad),.cosine(cosine),
 wire [0:0] dir ;
 assign dir = (2 > 3) ;
 
-hexdisplay segdisplay(.clk(CLK), .value(anglerad), .enable(1), .segment(_7seg),.omask(digitsel)) ;
+hexdisplay segdisplay(.clk(CLK), .value(disp), .enable(1), .segment(_7seg),.omask(digitsel)) ;
+
+
+// Toggle Hex display - 4 char hex display - show first 16 bits (with ':') followed by lower 16 bits
+wire [15:0] disp ;
+assign disp = (radcounter[24] ? ((sine >> 16) & 16'hffff) : (sine & 16'hffff)) ;
+assign P1A10 = radcounter[24] ;   // ':' indicates top 16 bits
+
 
 //assign lvalue = 16'habcd ;
 
