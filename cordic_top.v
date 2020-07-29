@@ -35,8 +35,8 @@ module top (
 	output LED5
 );
 
-localparam WIDTH = 64 ;
-localparam FPSHIFT = 10 ;
+localparam WIDTH = 32 ;
+localparam FPSHIFT = 28 ;
 
 `define _FP(_val, _shift) (_val * (1 <<< _shift))
 `define _UFP(_val, _shift) (_val >>> _shift)
@@ -78,28 +78,31 @@ reg signed [WIDTH - 1:0] cosine ;
 reg signed [WIDTH - 1:0] sine ;
 reg signed [WIDTH - 1:0] finalAngle ;
 reg [1:0] currentQuad ;
-reg [16:0] radcounter ;
+reg [14:0] radcounter ;
 
 assign angle1degrad =  `_FP(`_DEG2RADIANS(1),FPSHIFT) ;
+//assign anglerad = `_FP(`_DEG2RADIANS(45),FPSHIFT) ;
 
 
-
-always @(posedge CLK)
-begin
+  always @(posedge CLK)
+  begin
     radcounter <= radcounter + 1 ;
     if (radcounter == 0)
     begin
       anglerad <= anglerad + angle1degrad ;
       if (anglerad > `_FP(`_DEG2RADIANS(360),FPSHIFT))
-      begin
-          anglerad <= 0 ;
+        begin
+        anglerad <= 0 ;
       end
     end
-end
+  end
 
-cordic #(.WIDTH(32),.FPSHIFT(10)) c1(.clk(CLK),.angle(anglerad),.cosine(cosine),.sine(sine),.finalAngle(finalAngle),.currentQuad(currentQuad)) ;
+cordic #(.WIDTH(32),.FPSHIFT(28)) c1(.clk(CLK),.angle(anglerad),.cosine(cosine),.sine(sine),.finalAngle(finalAngle),.currentQuad(currentQuad)) ;
 
-hexdisplay segdisplay(.clk(CLK), .value(finalAngle), .enable(1), .segment(_7seg),.omask(digitsel)) ;
+wire [0:0] dir ;
+assign dir = (2 > 3) ;
+
+hexdisplay segdisplay(.clk(CLK), .value(anglerad), .enable(1), .segment(_7seg),.omask(digitsel)) ;
 
 //assign lvalue = 16'habcd ;
 
