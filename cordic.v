@@ -2,10 +2,9 @@
 module  cordic  (
 	input clk,
 	input signed [WIDTH-1:0] angle,
-	output signed [WIDTH-1:0] cosine,
-	output signed [WIDTH-1:0] sine,
-	output signed reg [WIDTH-1:0] finalAngle,
-	output [1:0] currentQuad
+	output reg signed [WIDTH-1:0] cosine,
+	output reg signed [WIDTH-1:0] sine,
+	output reg signed [WIDTH-1:0] finalAngle
 );
 
 parameter WIDTH = 32 ;
@@ -63,7 +62,7 @@ wire  signed [31:0] vx,vy,startingAngle ;
 wire signed [31:0] startVx, startVy ;
 
 
-wire signed [31:0] startingAngles [3:0] ;
+wire  signed [31:0] startingAngles [3:0] ;
 wire signed [31:0] startingVx [3:0] ;
 wire signed [31:0] startingVy [3:0] ;
 
@@ -92,7 +91,6 @@ assign startingVy[3] = zeroFP ;
 assign startVx = startingVx[quad] ;
 assign startVy = startingVy[quad] ;
 assign startingAngle = startingAngles[quad] ;
-assign currentQuad = quad ;
 
 
 wire signed [31:0] x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,x17,x18,x19,x20,x21,x22,x23,x24,x25,x26,x27,x28,x29,x30,x31 ;

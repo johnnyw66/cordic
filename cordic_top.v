@@ -39,11 +39,13 @@ module top (
 
 localparam WIDTH = 32 ;
 localparam FPSHIFT = 28 ;
+localparam _MAINCLOCKFREQ = 12000000 ;
 
 `define _FP(_val, _shift) (_val * (1 <<< _shift))
 `define _UFP(_val, _shift) (_val >>> _shift)
 `define _DEG2RADIANS(_deg) (_deg * 3.1415926535 / 180.0)
 `define _RADIANS2DEG(_rad) (_rad * 180.0 /  3.1415926535)
+
 
 wire red, green ;
 
@@ -58,84 +60,66 @@ blinker #(24) blinkGREEN(.clk(CLK), .led(green)) ;
 assign LEDR_N =  BTN_N ? ~red : 1 ;
 assign LEDG_N =  BTN_N ? ~green : 1;
 
-reg [20:0] counter ;
-reg [15:0] hcounter ;
-
-always @(posedge CLK)
-begin
-  counter <= counter + 1 ;
-  if (counter == 0)
-  begin
-    hcounter <= hcounter + 1 ;
-  end
-end
 
 
-wire [3:0] digitsel ;
-wire [6:0] _7seg ;
-wire signed [WIDTH - 1:0] angle1degrad ;
 
-reg signed [WIDTH - 1:0] anglerad ;
-reg signed [WIDTH - 1:0] cosine ;
-reg signed [WIDTH - 1:0] sine ;
-reg signed [WIDTH - 1:0] finalAngle ;
-reg [1:0] currentQuad ;
-reg [24:0] radcounter ;
-reg [31:0] musiccounter ;
 
-assign angle1degrad =  `_FP(`_DEG2RADIANS(1),FPSHIFT) ;
-assign anglerad = `_FP(`_DEG2RADIANS(30),FPSHIFT) ;
 
-`define _NOTE(_freq) (12000000/(2*_freq))
+`define _NOTE(_freq) (_MAINCLOCKFREQ / (2 * _freq))
 
   //FCLK = 12000000 ; // 12 MHZ
   //1 SEC = 12 000 000 TICKS
   //1/f secs = FCLK/f  ticks
-  // toggle state every FCLK/2*f
+  // toggle state every FCLK / 2*f
   // So for, A4 = 440Hz
-  // count up to 12000000 / 880 = 13636
+  // count up to 12000000 / (2 * 440) = 13636 and toggle 'speaker'
 
-  reg note ;
+  reg speaker ;
+  reg [31:0] musiccounter ;
 
   always @(posedge CLK)
   begin
       musiccounter <= musiccounter + 1 ;
-      if (musiccounter == `_NOTE(988))
+      if (musiccounter == `_NOTE(600))
       begin
-        note <= ~note ;
+        speaker <= ~speaker ;
         musiccounter <= 0 ;
       end
   end
-  assign P1B7 = note ;
+  assign P1B7 = speaker ;
 
-  always @(posedge CLK)
-  begin
-    radcounter <= radcounter + 1 ;
-    if (radcounter == 0)
-    begin
-      //anglerad <= anglerad + angle1degrad ;
-      if (anglerad > `_FP(`_DEG2RADIANS(360),FPSHIFT))
-        begin
-        //anglerad <= 0 ;
-      end
-    end
-  end
 
-cordic #(.WIDTH(32),.FPSHIFT(28)) c1(.clk(CLK),.angle(anglerad),.cosine(cosine),.sine(sine),.finalAngle(finalAngle),.currentQuad(currentQuad)) ;
 
-wire [0:0] dir ;
-assign dir = (2 > 3) ;
+wire [WIDTH - 1:0] angle1degrad ;
+wire [WIDTH - 1:0] radianAngle ;
+wire signed [WIDTH - 1:0] cosine ;
+wire signed [WIDTH - 1:0] sine ;
+
+reg signed [WIDTH - 1:0] finalAngle ;
+assign angle1degrad =  `_FP(`_DEG2RADIANS(1),FPSHIFT) ;
+assign radianAngle = `_FP(`_DEG2RADIANS(45),FPSHIFT) ;
+
+
+cordic #(.WIDTH(32),.FPSHIFT(28)) c1(.clk(CLK),.angle(radianAngle),.cosine(cosine),.sine(sine),.finalAngle(finalAngle)) ;
+
+
+
+
+wire [3:0] digitsel ;
+wire [6:0] _7seg ;
+wire [15:0] disp ;
+reg [24:0] displaycounter ;
+
+always @(posedge CLK)
+begin
+  displaycounter <= displaycounter + 1 ;
+end
 
 hexdisplay segdisplay(.clk(CLK), .value(disp), .enable(1), .segment(_7seg),.omask(digitsel)) ;
 
-
-// Toggle Hex display - 4 char hex display - show first 16 bits (with ':') followed by lower 16 bits
-wire [15:0] disp ;
-assign disp = (radcounter[24] ? ((sine >> 16) & 16'hffff) : (sine & 16'hffff)) ;
-assign P1A10 = radcounter[24] ;   // ':' indicates top 16 bits
-
-
-//assign lvalue = 16'habcd ;
+// Toggle Hex display - 4 char hex display - show top 16 bits (with ':') followed by lower 16 bits
+assign disp = (displaycounter[24] ? ((sine >> 16) & 16'hffff) : (sine & 16'hffff)) ;
+assign P1A10 = displaycounter[24] ;   // ':' indicates top 16 bits
 
 assign {P1B1, P1B2, P1B3, P1B4} = {digitsel[0], digitsel[1], digitsel[2], digitsel[3]} ;
 assign {P1A1, P1A2, P1A3, P1A4, P1A7, P1A8, P1A9} =  _7seg[6:0] ;

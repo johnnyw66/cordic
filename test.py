@@ -127,7 +127,7 @@ def generateAngleTable():
     for j in range(0,256):
         angle = j * 2.0 * math.pi / 256 ;     # work out the angle which will allow
         fangle = fp(angle) ;
-        print("assign angles[%02d]  = 32'b%s ;" % (j,format(fangle, '031b')))
+        print("8'd%02d : rangle <= 32'b%s ;" % (j,format(fangle, '031b')))
     return
 
 
