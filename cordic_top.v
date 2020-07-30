@@ -46,6 +46,9 @@ localparam _MAINCLOCKFREQ = 12000000 ;
 `define _DEG2RADIANS(_deg) (_deg * 3.1415926535 / 180.0)
 `define _RADIANS2DEG(_rad) (_rad * 180.0 /  3.1415926535)
 
+localparam _JOHNON_CIRCLEBITSIZE = (10);
+`define _JOHNONS2RADS(_johnons) ((2.0 * _johnons * 3.1415926535) / (1<<_JOHNON_CIRCLEBITSIZE))
+
 
 wire red, green ;
 
