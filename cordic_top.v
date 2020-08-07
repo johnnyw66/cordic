@@ -103,9 +103,10 @@ assign angle1degrad =  `_FP(`_DEG2RADIANS(1),FPSHIFT) ;
 assign radianAngle = `_FP(`_DEG2RADIANS(45),FPSHIFT) ;
 
 
-cordic #(.WIDTH(32),.FPSHIFT(28)) c1(.clk(CLK),.angle(radianAngle),.cosine(cosine),.sine(sine),.finalAngle(finalAngle)) ;
+//cordic #(.WIDTH(32),.FPSHIFT(28)) c1(.clk(CLK),.angle(radianAngle),.cosine(cosine),.sine(sine),.finalAngle(finalAngle)) ;
 
 
+frequency_generator fgen(.clk(CLK), .stepsize(0), .sinevalue(sine)) ;
 
 
 wire [3:0] digitsel ;
