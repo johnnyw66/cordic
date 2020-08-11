@@ -48,6 +48,7 @@ localparam _MAINCLOCKFREQ = 12000000 ;
 
 localparam _JOHNON_CIRCLEBITSIZE = (10);
 `define _JOHNONS2RADS(_johnons) ((2.0 * _johnons * 3.1415926535) / (1<<_JOHNON_CIRCLEBITSIZE))
+`define _CALCSTEP(_FREQ, _CIRCLEBITSIZE, _BOARD_CLOCKSPEED) ((0.0 + ((_FREQ * (1<<16) * (1 << _CIRCLEBITSIZE) )/_BOARD_CLOCKSPEED)))
 
 
 wire red, green ;
@@ -103,10 +104,11 @@ assign angle1degrad =  `_FP(`_DEG2RADIANS(1),FPSHIFT) ;
 assign radianAngle = `_FP(`_DEG2RADIANS(45),FPSHIFT) ;
 
 
-//cordic #(.WIDTH(32),.FPSHIFT(28)) c1(.clk(CLK),.angle(radianAngle),.cosine(cosine),.sine(sine),.finalAngle(finalAngle)) ;
+cordic #(.WIDTH(32),.FPSHIFT(28)) c1(.clk(CLK),.angle(radianAngle),.cosine(cosine),.sine(sine),.finalAngle(finalAngle)) ;
 
-
-frequency_generator fgen(.clk(CLK), .stepsize(0), .sinevalue(sine)) ;
+//wire [31:0] testfreq ;
+//assign testfreq = `_CALCSTEP(440,10,12000000) ;
+//frequency_generator fgen(.clk(CLK), .stepsize(testfreq), .sinevalue(sine)) ;
 
 
 wire [3:0] digitsel ;
